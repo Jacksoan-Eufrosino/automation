@@ -1,0 +1,38 @@
+- name: Meu playbook
+  hosts: all
+  tasks:
+    - name: Instalando app's
+      become: true
+      ansible.builtin.apt:
+        name:
+          - git
+          - curl
+          - zsh
+          - vim
+          - tmux
+          - stow
+        state: present
+    - name: Clonando repo jacksoan
+      become: true
+      ansible.builtin.git:
+        repo: "https://github.com/Jacksoan-Eufrosino/dotfiles.git"
+        dest: /home/{{ ansible_user_id }}/dotfiles
+    - name: Clonando repo tpm
+      become: true
+      ansible.builtin.git:
+        repo: "https://github.com/tmux-plugins/tpm"
+        dest: /home/{{ ansible_user_id }}/.tmux/plugins/tpm
+    - name: Usando o stow
+      become: true
+      ansible.builtin.shell:
+        cmd: "cd /home/{{ ansible_user_id }}/dotfiles && stow ."
+    - block:
+        - name: Verificando se o Oh my Zsh esta Instalado
+          ansible.builtin.command: test -d /home/{{ ansible_user_id }}/.oh-my-zsh
+          register: ohmyzsh
+          ignore_errors: true
+
+        - name: Instalado o oh-my-zsh
+          ansible.builtin.shell:
+            cmd: 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
+          when: ohmyzsh.rc != 0
