@@ -1,10 +1,10 @@
 - name: Configurar maquina nova do zero
   hosts: localhost
   connection: local
-  become: true
 
   tasks:
     - name: Instalar dependencias
+      become: true
       apt:
         state: present
         install_recommends: true
@@ -25,91 +25,123 @@
 
     # Bloco relacionado aos meus dotfiles
     - block:
-      - name: Clonar repo dos meus dotfiles
-        git:
-          repo: "https://github.com/Jacksoan-Eufrosino/dotfiles.git"
-          dest: /home/{{ ansible_user_id }}/dotfiles
+        - name: Clonar repo dos meus dotfiles
+          git:
+            repo: "https://github.com/Jacksoan-Eufrosino/dotfiles.git"
+            dest: /home/{{ ansible_user_id }}/dotfiles
 
-      - name: Usando o stow
-        shell:
-          cmd: "cd /home/{{ ansible_user_id }}/dotfiles && stow ."
+        - name: Usando o stow
+          shell:
+            cmd: "cd /home/{{ ansible_user_id }}/dotfiles && stow ."
 
     # Bloco relacionado ao pugin do tmux
     - block:
-      - name: Clonando repo tpm
-        git:
-          repo: "https://github.com/tmux-plugins/tpm"
-          dest: /home/{{ ansible_user_id }}/.tmux/plugins/tpm
+        - name: Clonando repo tpm
+          git:
+            repo: "https://github.com/tmux-plugins/tpm"
+            dest: /home/{{ ansible_user_id }}/.tmux/plugins/tpm
 
     # Bloco relacionado ao oh-my-zsh
     - block:
-      - name: Verificando se o oh-my-Zsh esta Instalado
-        command: test -d /home/{{ ansible_user_id }}/.oh-my-zsh
-        register: ohmyzsh
-        ignore_errors: true
+        - name: Verificando se o oh-my-Zsh esta Instalado
+          command: test -d /home/{{ ansible_user_id }}/.oh-my-zsh
+          register: ohmyzsh
+          ignore_errors: true
 
-      - name: Instalado o oh-my-zsh
-        shell:
-          cmd: "curl -fsL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | bash"
-        when: ohmyzsh.rc != 0
+        - name: Instalado o oh-my-zsh
+          shell:
+            cmd: "curl -fsL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | bash"
+            warn: false
+          when: ohmyzsh.rc != 0
 
-      - name: Mudar o shell padrao para o ZSH
-        user:
-          name: "{{ ansible_user_id }}"
-          shell: /bin/zsh
+        - name: Mudar o shell padrao para o ZSH
+          become: true
+          user:
+            name: "{{ ansible_user_id }}"
+            shell: /bin/zsh
 
     # Bloco relacionado ao VsCode
-    - block:
-      - name: Instalar chaves da Microsoft
-        apt_key:
-          url: https://packages.microsoft.com/keys/microsoft.asc'
-          state: present
-      - name: Instalar o repo do VsCode
-        apt_repository:
-          repo: "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"
-          state: present
-          filename: vscode
-      - name: Instalar o VSCode
-        apt:
-          name: code
-      - name: Instalar extensoes do vscode
-        shell:
-          cmd: code --install-extension '{{ item }}'
-        loop:
-          - vscode-icons-team.vscode-icons
-          - adpyke.codesnap
-          - dbaeumer.vscode-eslint
-          - dracula-theme.theme-dracula
-          - esbenp.prettier-vscode
-          - bradlc.vscode-tailwindcss
-          - formulahendry.auto-close-tag
-          - formulahendry.auto-complete-tag
-          - formulahendry.auto-rename-tag
-          - dsznajder.es7-react-js-snippets
-          - mechatroner.rainbow-csv
-          - ms-vscode.live-server
+    # - block:
+    #     - name: Baixar a chave GPG da Microsoft
+    #       become: true
+    #       get_url:
+    #         url: https://packages.microsoft.com/keys/microsoft.asc
+    #         dest: /tmp/microsoft.asc
+
+    #     - name: Criar o diretório /etc/apt/keyrings se não existir
+    #       become: true
+    #       file:
+    #         path: /etc/apt/keyrings
+    #         state: directory
+    #         mode: "0755"
+
+    #     - name: Converter a chave GPG para o formato adequado
+    #       become: true
+    #       shell: |
+    #         gpg --dearmor /tmp/microsoft.asc
+    #         mv /tmp/microsoft.asc.gpg /etc/apt/keyrings/packages.microsoft.gpg
+
+    #     - name: Instalar o repo do VsCode
+    #       become: true
+    #       apt_repository:
+    #         repo: "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main"
+    #         state: present
+    #         filename: vscode
+
+    #     - name: Atualizar a lista de pacotes
+    #       become: true
+    #       apt:
+    #         update_cache: yes
+
+    #     - name: Instalar o VSCode
+    #       become: true
+    #       apt:
+    #         name: code
+    #         state: present
+
+    #     - name: Instalar extensoes do vscode
+    #       command: code --install-extension '{{ item }}'
+    #       loop:
+    #         - vscode-icons-team.vscode-icons
+    #         - adpyke.codesnap
+    #         - dbaeumer.vscode-eslint
+    #         - dracula-theme.theme-dracula
+    #         - esbenp.prettier-vscode
+    #         - bradlc.vscode-tailwindcss
+    #         - formulahendry.auto-close-tag
+    #         - formulahendry.auto-complete-tag
+    #         - formulahendry.auto-rename-tag
+    #         - dsznajder.es7-react-js-snippets
+    #         - mechatroner.rainbow-csv
+    #         - ms-vscode.live-server
 
     # Bloco relacionado ao broser Brave
     - block:
-      - name: Instalar a chave do browser Brave
-        apt_key:
-          url: "https://brave-browser-apt-release.s3.brave.com/brave-core.asc"
-          state: present
+        - name: Instalar a chave do browser Brave
+          become: true
+          apt_key:
+            url: "https://brave-browser-apt-release.s3.brave.com/brave-core.asc"
+            state: present
 
-      - name: Instalar repo do Brave
-        apt_repository:
-          repo: "deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main"
-          state: present
-          filename: brave
+        - name: Instalar repo do Brave
+          become: true
+          apt_repository:
+            repo: "deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main"
+            state: present
+            filename: brave
 
-      - name: Instalar o Brave
-        apt:
-          name: brave-browser
+        - name: Instalar o Brave
+          become: true
+          apt:
+            name: brave-browser
 
     - block:
-      - name: Adicionar repo do Ulauncher
-        apt_repository:
-          repo: "ppa:agornostal/ulauncher"
-      - name: Instalar Ulauncher
-        apt:
-          name: ulauncher
+        - name: Adicionar repo do Ulauncher
+          become: true
+          apt_repository:
+            repo: "ppa:agornostal/ulauncher"
+
+        - name: Instalar Ulauncher
+          become: true
+          apt:
+            name: ulauncher
