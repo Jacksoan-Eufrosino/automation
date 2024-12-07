@@ -61,59 +61,59 @@
             shell: /bin/zsh
 
     # Bloco relacionado ao VsCode
-    # - block:
-    #     - name: Baixar a chave GPG da Microsoft
-    #       become: true
-    #       get_url:
-    #         url: https://packages.microsoft.com/keys/microsoft.asc
-    #         dest: /tmp/microsoft.asc
+    - block:
+        - name: Baixar a chave GPG da Microsoft
+          become: true
+          get_url:
+            url: https://packages.microsoft.com/keys/microsoft.asc
+            dest: /tmp/microsoft.asc
 
-    #     - name: Criar o diretório /etc/apt/keyrings se não existir
-    #       become: true
-    #       file:
-    #         path: /etc/apt/keyrings
-    #         state: directory
-    #         mode: "0755"
+        - name: Criar o diretório /etc/apt/keyrings se não existir
+          become: true
+          file:
+            path: /etc/apt/keyrings
+            state: directory
+            mode: "0755"
 
-    #     - name: Converter a chave GPG para o formato adequado
-    #       become: true
-    #       shell: |
-    #         gpg --dearmor /tmp/microsoft.asc
-    #         mv /tmp/microsoft.asc.gpg /etc/apt/keyrings/packages.microsoft.gpg
+        - name: Converter a chave GPG para o formato adequado
+          become: true
+          shell: |
+            gpg --dearmor /tmp/microsoft.asc
+            mv /tmp/microsoft.asc.gpg /etc/apt/keyrings/packages.microsoft.gpg
 
-    #     - name: Instalar o repo do VsCode
-    #       become: true
-    #       apt_repository:
-    #         repo: "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main"
-    #         state: present
-    #         filename: vscode
+        - name: Instalar o repo do VsCode
+          become: true
+          apt_repository:
+            repo: "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main"
+            state: present
+            filename: vscode
 
-    #     - name: Atualizar a lista de pacotes
-    #       become: true
-    #       apt:
-    #         update_cache: yes
+        - name: Atualizar a lista de pacotes
+          become: true
+          apt:
+            update_cache: yes
 
-    #     - name: Instalar o VSCode
-    #       become: true
-    #       apt:
-    #         name: code
-    #         state: present
+        - name: Instalar o VSCode
+          become: true
+          apt:
+            name: code
+            state: present
 
-    #     - name: Instalar extensoes do vscode
-    #       command: code --install-extension '{{ item }}'
-    #       loop:
-    #         - vscode-icons-team.vscode-icons
-    #         - adpyke.codesnap
-    #         - dbaeumer.vscode-eslint
-    #         - dracula-theme.theme-dracula
-    #         - esbenp.prettier-vscode
-    #         - bradlc.vscode-tailwindcss
-    #         - formulahendry.auto-close-tag
-    #         - formulahendry.auto-complete-tag
-    #         - formulahendry.auto-rename-tag
-    #         - dsznajder.es7-react-js-snippets
-    #         - mechatroner.rainbow-csv
-    #         - ms-vscode.live-server
+        - name: Instalar extensoes do vscode
+          command: code --install-extension '{{ item }}'
+          loop:
+            - vscode-icons-team.vscode-icons
+            - adpyke.codesnap
+            - dbaeumer.vscode-eslint
+            - dracula-theme.theme-dracula
+            - esbenp.prettier-vscode
+            - bradlc.vscode-tailwindcss
+            - formulahendry.auto-close-tag
+            - formulahendry.auto-complete-tag
+            - formulahendry.auto-rename-tag
+            - dsznajder.es7-react-js-snippets
+            - mechatroner.rainbow-csv
+            - ms-vscode.live-server
 
     # Bloco relacionado ao broser Brave
     - block:
