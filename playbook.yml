@@ -1,38 +1,115 @@
-- name: Meu playbook
-  hosts: all
+- name: Configurar maquina nova do zero
+  hosts: localhost
+  connection: local
+  become: true
+
   tasks:
-    - name: Instalando app's
-      become: true
-      ansible.builtin.apt:
+    - name: Instalar dependencias
+      apt:
+        state: present
+        install_recommends: true
         name:
           - git
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - python3-pip
+          - make
+          - jq
           - curl
           - zsh
           - vim
+          - wget
           - tmux
           - stow
-        state: present
-    - name: Clonando repo jacksoan
-      become: true
-      ansible.builtin.git:
-        repo: "https://github.com/Jacksoan-Eufrosino/dotfiles.git"
-        dest: /home/{{ ansible_user_id }}/dotfiles
-    - name: Clonando repo tpm
-      become: true
-      ansible.builtin.git:
-        repo: "https://github.com/tmux-plugins/tpm"
-        dest: /home/{{ ansible_user_id }}/.tmux/plugins/tpm
-    - name: Usando o stow
-      become: true
-      ansible.builtin.shell:
-        cmd: "cd /home/{{ ansible_user_id }}/dotfiles && stow ."
-    - block:
-        - name: Verificando se o Oh my Zsh esta Instalado
-          ansible.builtin.command: test -d /home/{{ ansible_user_id }}/.oh-my-zsh
-          register: ohmyzsh
-          ignore_errors: true
 
-        - name: Instalado o oh-my-zsh
-          ansible.builtin.shell:
-            cmd: 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
-          when: ohmyzsh.rc != 0
+    # Bloco relacionado aos meus dotfiles
+    - block:
+      - name: Clonar repo dos meus dotfiles
+        git:
+          repo: "https://github.com/Jacksoan-Eufrosino/dotfiles.git"
+          dest: /home/{{ ansible_user_id }}/dotfiles
+
+      - name: Usando o stow
+        shell:
+          cmd: "cd /home/{{ ansible_user_id }}/dotfiles && stow ."
+
+    # Bloco relacionado ao pugin do tmux
+    - block:
+      - name: Clonando repo tpm
+        ansible.builtin.git:
+          repo: "https://github.com/tmux-plugins/tpm"
+          dest: /home/{{ ansible_user_id }}/.tmux/plugins/tpm
+
+    # Bloco relacionado ao oh-my-zsh
+    - block:
+      - name: Verificando se o oh-my-Zsh esta Instalado
+        command: test -d /home/{{ ansible_user_id }}/.oh-my-zsh
+        register: ohmyzsh
+        ignore_errors: true
+
+      - name: Instalado o oh-my-zsh
+        shell:
+          cmd: "curl -fsL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | bash"
+        when: ohmyzsh.rc != 0
+
+      - name: Mudar o shell padrao para o ZSH
+        user:
+          name: "{{ ansible_user_id }}"
+          shell: /bin/zsh
+
+    # Bloco relacionado ao VsCode
+    - block:
+      - name: Instalar chaves da Microsoft
+        apt_key:
+          url: https://packages.microsoft.com/keys/microsoft.asc'
+          state: present
+      - name: Instalar o repo do VsCode
+        apt_repository:
+          repo: "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"
+          state: present
+          filename: vscode
+      - name: Instalar o VSCode
+        apt:
+          name: code
+      - name: Instalar extensoes do vscode
+        shell:
+          cmd: code --install-extension '{{ item }}'
+        loop:
+          - vscode-icons-team.vscode-icons
+          - adpyke.codesnap
+          - dbaeumer.vscode-eslint
+          - dracula-theme.theme-dracula
+          - esbenp.prettier-vscode
+          - bradlc.vscode-tailwindcss
+          - formulahendry.auto-close-tag
+          - formulahendry.auto-complete-tag
+          - formulahendry.auto-rename-tag
+          - dsznajder.es7-react-js-snippets
+          - mechatroner.rainbow-csv
+          - ms-vscode.live-server
+
+    # Bloco relacionado ao broser Brave
+    - block:
+      - name: Instalar a chave do browser Brave
+        apt_key:
+          url: "https://brave-browser-apt-release.s3.brave.com/brave-core.asc"
+          state: present
+
+      - name: Instalar repo do Brave
+        apt_repository:
+          repo: "deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main"
+          state: present
+          filename: brave
+
+      - name: Instalar o Brave
+        apt:
+          name: brave-browser
+
+    - block:
+      - name: Adicionar repo do Ulauncher
+        apt_repository:
+          repo: "ppa:agornostal/ulauncher"
+      - name: Instalar Ulauncher
+        apt:
+          name: ulauncher
