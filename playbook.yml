@@ -37,7 +37,7 @@
     # Bloco relacionado ao pugin do tmux
     - block:
       - name: Clonando repo tpm
-        ansible.builtin.git:
+        git:
           repo: "https://github.com/tmux-plugins/tpm"
           dest: /home/{{ ansible_user_id }}/.tmux/plugins/tpm
 
